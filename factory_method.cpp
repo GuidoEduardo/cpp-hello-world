@@ -3,65 +3,48 @@
 class Database {
     public:
         virtual ~Database() {}
-        virtual void Connect() const = 0;
+        virtual std::string Connect() const = 0;
 };
 
 class SQLDatabase : public Database { 
     public:
-        void Connect() const override {
-            std::cout << "SQL Example connection." << std::endl;
+        std::string Connect() const override {
+            return "SQL connection example.";
         }
 };
 
 class NoSQLDatabase : public Database {
     public:
-        void Connect() const override {
-            std::cout << "NoSQL Example connection." << std::endl;
+        std::string Connect() const override {
+            return "NoSQL connection example.";
         }
 };
 
 class Connector {
+    private:
+        Database &mDatabase;
+
     public:
+        Connector(Database &database) : mDatabase(database) {} 
         virtual ~Connector() {}
-        virtual Database *Create() const = 0;
-        void Configure() const {
-            Database *database = this->Create();
-            database->Connect();
-            delete database;
+
+        void Start() const {
+            std::cout << mDatabase.Connect() << std::endl;
         }
 };
-
-class SQLConnector : public Connector {
-    public:
-        Database *Create() const override {
-            return new SQLDatabase();
-        }
-};
-
-class NoSQLConnector : public Connector {
-    public:
-        Database *Create() const override {
-            return new NoSQLDatabase();
-        }
-};
-
-void SetupDatabase(Connector &connector) {
-    connector.Configure();
-}
 
 int main() {
-    std::cout << "Example Database connections.\n" << std::endl;
+    std::cout << "Client: Testing factory.\n" << std::endl;
 
     std::cout << "SQL Database" << std::endl;
-    Connector *sqlConnector = new SQLConnector();
-    SetupDatabase(*sqlConnector);
+    SQLDatabase sqlDatabase;
+    Connector sqlConnector(sqlDatabase);
+    sqlConnector.Start();
 
     std::cout << "\nNoSQL Database" << std::endl;
-    Connector *noSqlConnector = new NoSQLConnector();
-    SetupDatabase(*noSqlConnector);
-
-    delete sqlConnector;
-    delete noSqlConnector;
+    NoSQLDatabase noSqlDatabase;
+    Connector noSqlConnector(noSqlDatabase);
+    noSqlConnector.Start();
 
     return 0;
 }
