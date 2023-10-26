@@ -81,8 +81,8 @@ class Application {
             Button *button = mFactory.CreateButton();
             Checkbox *checkbox = mFactory.CreateCheckbox();
 
-            button->Click();
-            checkbox->Check();
+            std::cout << button->Click() << std::endl;
+            std::cout << checkbox->Check() << std::endl;
 
             delete button;
             delete checkbox;
