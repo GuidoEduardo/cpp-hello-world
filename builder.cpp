@@ -4,14 +4,27 @@
 class Engine {
     public:
         virtual ~Engine() {}
+        virtual std::string GetName() const = 0;
 };
 
-class SportEngine : public Engine {};
-class SUVEngine : public Engine {};
+class SportEngine : public Engine {
+    public:
+        std::string GetName() const override {
+            return "Sport";
+        }
+};
+
+class SUVEngine : public Engine {
+    public:
+        std::string GetName() const override {
+            return "SUV";
+        }
+};
 
 class Car {
     public:
         virtual ~Car() {}
+        virtual void ListInfo() = 0;
 };
 
 class Manual : public Car {
@@ -24,6 +37,15 @@ class Manual : public Car {
         ~Manual() {
             delete engine;
         }
+
+        void ListInfo() override {
+            std::cout << "[MANUAL]"
+                      << " Seats:" << this->seats 
+                      << " Engine:" << this->engine->GetName() 
+                      << " Trip computer:" << this->tripComputer 
+                      << " GPS:" << this->gps 
+                      << std::endl;
+        }
 };
 
 class Automatic : public Car {
@@ -35,13 +57,22 @@ class Automatic : public Car {
 
         ~Automatic() {
             delete engine;
-        }    
+        }
+
+        void ListInfo() override {
+            std::cout << "[AUTOMATIC] " 
+                      << " Seats:" << this->seats 
+                      << " Engine:" << this->engine->GetName() 
+                      << " Trip computer:" << this->tripComputer 
+                      << " GPS:" << this->gps 
+                      << std::endl;
+        }
 };
 
 class Builder {
     public:
         virtual ~Builder() {}
-        virtual void Reset();
+        virtual void Reset() = 0;
         virtual void SetSeats(int number) = 0;
         virtual void SetEngine(Engine *engine) = 0;
         virtual void SetTripComputer(bool hasTripComputer) = 0;
@@ -61,7 +92,7 @@ class ManualBuilder : public Builder {
             delete mCar;
         }
 
-        void Reset() {
+        void Reset() override {
             this->mCar = new Manual();
         }
 
@@ -103,7 +134,7 @@ class AutomaticBuilder : public Builder {
             delete mCar;
         }
 
-        void Reset() {
+        void Reset() override {
             this->mCar = new Automatic();
         }
 
@@ -137,12 +168,12 @@ class Director {
         Builder *mBuilder;
     
     public:
-        void SetBuilder(Builder *builder) {
-            this->mBuilder = builder;
+        ~Director() {
+            delete this->mBuilder;
         }
 
-        ~Director() {
-            delete mBuilder;
+        void SetBuilder(Builder *builder) {
+            this->mBuilder = builder;
         }
 
         void BuildSUVCar() {
@@ -160,10 +191,37 @@ class Director {
         }
 };
 
-void ClientCode(Director &director) {
-    ManualBuilder builder;
-    director.SetBuilder(&builder);
+void ClientCode(Director *director) {
+    ManualBuilder *manualBuilder = new ManualBuilder();
+    director->SetBuilder(manualBuilder);
 
+    director->BuildSportCar();
+    Manual *manualSportCar = manualBuilder->GetCar();
+    manualSportCar->ListInfo();
+    delete manualSportCar;
 
+    director->BuildSUVCar();
+    Manual *manualSUVCar = manualBuilder->GetCar();
+    manualSUVCar->ListInfo();
+    delete manualSUVCar;
+
+    AutomaticBuilder *automaticBuilder = new AutomaticBuilder();
+    director->SetBuilder(automaticBuilder);
+
+    director->BuildSportCar();
+    Automatic *automaticSportCar = automaticBuilder->GetCar();
+    automaticSportCar->ListInfo();
+    delete automaticSportCar;
+
+    director->BuildSUVCar();
+    Automatic *automaticSUVCar = automaticBuilder->GetCar();
+    automaticSUVCar->ListInfo();
+    delete automaticSUVCar;
 }
 
+int main() {
+    Director *director = new Director();
+    ClientCode(director);
+    delete director;
+    return 0;
+}
