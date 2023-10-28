@@ -3,225 +3,124 @@
 
 class Engine {
     public:
-        virtual ~Engine() {}
-        virtual std::string GetName() const = 0;
+        int horsepower;
 };
 
-class SportEngine : public Engine {
+class Seats {
     public:
-        std::string GetName() const override {
-            return "Sport";
-        }
+        int number;
 };
 
-class SUVEngine : public Engine {
+class Navegation {
     public:
-        std::string GetName() const override {
-            return "SUV";
-        }
+        bool gps;
+        bool tripSystem;
 };
 
 class Car {
     public:
-        virtual ~Car() {}
-        virtual void ListInfo() = 0;
-};
+        Engine* engine;
+        Seats* seats;
+        Navegation* navegation;
 
-class Manual : public Car {
-    public:
-        int seats;
-        Engine *engine;
-        bool tripComputer;
-        bool gps;
-
-        ~Manual() {
-            delete engine;
-        }
-
-        void ListInfo() override {
-            std::cout << "[MANUAL]"
-                      << " Seats:" << this->seats 
-                      << " Engine:" << this->engine->GetName() 
-                      << " Trip computer:" << this->tripComputer 
-                      << " GPS:" << this->gps 
-                      << std::endl;
+        virtual void ListInfo() {
+            std::cout << "Engine (horsepower): " << engine->horsepower << std::endl;
+            std::cout << "Seats: " << seats->number << std::endl;
+            std::cout << "Navegation (gps): " << navegation->gps << std::endl;
+            std::cout << "Navegation (trip system): " << navegation->tripSystem << std::endl;
         }
 };
 
-class Automatic : public Car {
+class CarBuilder {
     public:
-        int seats;
-        Engine *engine;
-        bool tripComputer;
-        bool gps;
-
-        ~Automatic() {
-            delete engine;
-        }
-
-        void ListInfo() override {
-            std::cout << "[AUTOMATIC] " 
-                      << " Seats:" << this->seats 
-                      << " Engine:" << this->engine->GetName() 
-                      << " Trip computer:" << this->tripComputer 
-                      << " GPS:" << this->gps 
-                      << std::endl;
-        }
-};
-
-class Builder {
-    public:
-        virtual ~Builder() {}
-        virtual void Reset() = 0;
-        virtual void SetSeats(int number) = 0;
-        virtual void SetEngine(Engine *engine) = 0;
-        virtual void SetTripComputer(bool hasTripComputer) = 0;
-        virtual void SetGPS(bool hasGps) = 0;
-};
-
-class ManualBuilder : public Builder {
-    private:
-        Manual *mCar;
-    
-    public:
-        ManualBuilder() {
-            this->Reset();
-        }
-
-        ~ManualBuilder() {
-            delete mCar;
-        }
-
-        void Reset() override {
-            this->mCar = new Manual();
-        }
-
-        void SetSeats(int number) override {
-            this->mCar->seats = number;
-        }
-
-        void SetEngine(Engine *engine) override {
-            this->mCar->engine = engine;
-        }
-
-        void SetTripComputer(bool hasTripComputer) override {
-            this->mCar->tripComputer = hasTripComputer;
-        }
-
-        void SetGPS(bool hasGps) override {
-            this->mCar->gps = hasGps;
-        }
-
-        Manual *GetCar() {
-            Manual *result = this->mCar;
-            
-            this->Reset();
-            
-            return result;
-        }
-};
-
-class AutomaticBuilder : public Builder {
-    private:
-        Automatic *mCar;
-    
-    public:
-        AutomaticBuilder() {
-            this->Reset();
-        }
-
-        ~AutomaticBuilder() {
-            delete mCar;
-        }
-
-        void Reset() override {
-            this->mCar = new Automatic();
-        }
-
-        void SetSeats(int number) override {
-            this->mCar->seats = number;
-        }
-
-        void SetEngine(Engine *engine) override {
-            this->mCar->engine = engine;
-        }
-
-        void SetTripComputer(bool hasTripComputer) override {
-            this->mCar->tripComputer = hasTripComputer;
-        }
-
-        void SetGPS(bool hasGps) override {
-            this->mCar->gps = hasGps;
-        }
-
-        Automatic *GetCar() {
-            Automatic *result = this->mCar;
-            
-            this->Reset();
-            
-            return result;
-        }
+        virtual Engine* GetEngine() const = 0;
+        virtual Seats* GetSeats() const = 0;
+        virtual Navegation* GetNavegation() const = 0;
 };
 
 class Director {
     private:
-        Builder *mBuilder;
+        CarBuilder* mBuilder;
     
     public:
-        ~Director() {
-            delete this->mBuilder;
+        void SetBuilder(CarBuilder* mBuilder) {
+            this->mBuilder = mBuilder;
         }
 
-        void SetBuilder(Builder *builder) {
-            this->mBuilder = builder;
-        }
+        Car* Build() {
+            Car* car = new Car();
 
-        void BuildSUVCar() {
-            this->mBuilder->SetEngine(new SUVEngine());
-            this->mBuilder->SetSeats(4);
-            this->mBuilder->SetTripComputer(true);
-            this->mBuilder->SetGPS(true);
-        }
+            car->engine = mBuilder->GetEngine();
+            car->seats = mBuilder->GetSeats();
+            car->navegation = mBuilder->GetNavegation();
 
-        void BuildSportCar() {
-            this->mBuilder->SetEngine(new SportEngine());
-            this->mBuilder->SetSeats(2);
-            this->mBuilder->SetTripComputer(false);
-            this->mBuilder->SetGPS(false);
+            return car;
         }
 };
 
-void ClientCode(Director *director) {
-    ManualBuilder *manualBuilder = new ManualBuilder();
-    director->SetBuilder(manualBuilder);
+class SportBuilder : public CarBuilder {
+    public:
+        Engine* GetEngine() const override {
+            Engine* engine = new Engine();
+            engine->horsepower = 2000;
+            return engine;
+        }
 
-    director->BuildSportCar();
-    Manual *manualSportCar = manualBuilder->GetCar();
-    manualSportCar->ListInfo();
-    delete manualSportCar;
+        Seats* GetSeats() const override {
+            Seats* seats = new Seats();
+            seats->number = 2;
+            return seats;
+        }
 
-    director->BuildSUVCar();
-    Manual *manualSUVCar = manualBuilder->GetCar();
-    manualSUVCar->ListInfo();
-    delete manualSUVCar;
+        Navegation* GetNavegation() const override {
+            Navegation* navegation = new Navegation();
+            navegation->gps = true;
+            navegation->tripSystem = false;
+            return navegation;
+        }
+};
 
-    AutomaticBuilder *automaticBuilder = new AutomaticBuilder();
-    director->SetBuilder(automaticBuilder);
+class SUVBuilder : public CarBuilder {
+    public:
+        Engine* GetEngine() const override {
+            Engine* engine = new Engine();
+            engine->horsepower = 400;
+            return engine;
+        }
 
-    director->BuildSportCar();
-    Automatic *automaticSportCar = automaticBuilder->GetCar();
-    automaticSportCar->ListInfo();
-    delete automaticSportCar;
+        Seats* GetSeats() const override {
+            Seats* seats = new Seats();
+            seats->number = 4;
+            return seats;
+        }
 
-    director->BuildSUVCar();
-    Automatic *automaticSUVCar = automaticBuilder->GetCar();
-    automaticSUVCar->ListInfo();
-    delete automaticSUVCar;
-}
+        Navegation* GetNavegation() const override {
+            Navegation* navegation = new Navegation();
+            navegation->gps = true;
+            navegation->tripSystem = true;
+            return navegation;
+        }
+};
 
 int main() {
-    Director *director = new Director();
-    ClientCode(director);
-    delete director;
+    Car* car;
+    
+    SportBuilder sportBuilder;
+    SUVBuilder suvBuilder;
+
+    Director director;
+
+    std::cout << "Building Sport Car" << std::endl;
+    director.SetBuilder(&sportBuilder);
+    car = director.Build();
+    car->ListInfo();
+
+    std::cout << std::endl;
+
+    std::cout << "Building SUV Car" << std::endl;
+    director.SetBuilder(&suvBuilder);
+    car = director.Build();
+    car->ListInfo();
+
     return 0;
 }
