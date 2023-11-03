@@ -3,55 +3,84 @@
 
 using namespace std;
 
-class GraphicComponent {
+class Component {
     public:
-        virtual void Move(int x, int y) = 0;
-        virtual void Draw() = 0;
+        virtual ~Component() {}
+        virtual void Add(Component *component) {}
+        virtual void Remove(Component *component) {}
+        virtual string Operation() const = 0;
 };
 
-class CompoundGraphicComposite : public GraphicComponent {
+class Composite : public Component {
     private:
-        list<GraphicComponent *> mChildrens;
+        list<Component *> mChildren;
 
     public:
-        void Add(GraphicComponent *component) {
-            mChildrens.push_back(component);
+        ~Composite() {
+            for (const Component* component : mChildren) {
+                delete component;
+            }
+
+            mChildren.clear();
         }
 
-        void Remove(GraphicComponent *component) {
-            mChildrens.remove(component);
+        void Add(Component* component) override {
+            mChildren.push_back(component);
         }
 
-        void Move(int x, int y) override {
-            // for (const GraphicComponent *component : mChildrens) {
-            //     if (component == mChildrens.back()) {
-                    
-            //     }
-            // }
+        void Remove(Component* component) override {
+            mChildren.remove(component);
         }
 
-        void Draw() override {}
+        string Operation() const override {
+            string result;
+
+            for (const Component* component : mChildren) {
+                result += component->Operation();
+
+                if (component != mChildren.back()) {
+                    result += " | ";
+                }
+            }
+                
+            return "Branch[ " + result + " ]";
+        }
 };
 
-class DotLeaf : public GraphicComponent {
-    protected:
-        int mX;
-        int mY;
-
+class Leaf : public Component {
     public:
-        DotLeaf(int x, int y)
-            : mX(x), mY(y) {}
-
-        void Move(int x, int y) override {
-            mX = x;
-            mY = y;
+        string Operation() const override {
+            return "Leaf";
         }
-
-        void Draw() override {
-            cout << "." << endl;
-        };
 };
 
-class ImageEditor {
+int main() {
+    cout << "Starting Composite pattern." << endl << endl;
+    
+    Leaf leaf;
+    cout << "Simple Component: " << leaf.Operation() << endl << endl;
+    
+    Component* tree = new Composite;
+    Component* firstBranch = new Composite;
+    Component* secondBranch = new Composite; 
 
-};
+    Component* treeLeaf = new Leaf;
+    Component* firstLeaf = new Leaf;
+    Component* secondLeaf = new Leaf;
+    Component* thirdLeaf = new Leaf;
+
+    tree->Add(firstBranch);
+    tree->Add(secondBranch);
+    tree->Add(treeLeaf);
+
+    firstBranch->Add(firstLeaf);
+    firstBranch->Add(secondLeaf);
+
+    secondBranch->Add(thirdLeaf);
+
+    cout << "Tree Component: " << tree->Operation() << endl << endl;
+
+    delete tree;
+ 
+    return 0;
+}
